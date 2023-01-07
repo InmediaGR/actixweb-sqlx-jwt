@@ -126,53 +126,54 @@ async fn info(
     }
 }
 
-#[get("/user-info/{who}")]
+#[get("/user-info")]
 async fn user_info(
-    form: web::Path<String>,
+    // form: web::Path<String>,
     auth: AuthorizationService,
     state: AppState,
 ) -> impl Responder {
-    let who = form.into_inner();
-    let w = who.as_str();
+    // let who = form.into_inner();
+    // let w = who.as_str();
+   
+
+    let mut msg = "I am who i am ";
+    msg = "I am who i am Really";
+    
+    // debug!("XXXXX msg is {:?}", msg);
+    
+    // let u::User = {};
+    
     // me
     let user = match state.get_ref().user_query(&auth.claims.sub).await {
         Ok(user) => {
             debug!("find user {:?} ok: {:?}", auth.claims, user);
-
-            if who == "_"
-                || [
-                user.id.to_string().as_str(),
-                user.name.as_str(),
-                user.email.as_str(),
-            ]
-                .contains(&w)
-            {
-                return ApiResult::new().with_msg("ok").with_data(user);
-            }
-
+            println!("find user {:?} ok: {:?}", auth.claims, user);
             user
         }
         Err(e) => {
             error!("find user {:?} error: {:?}", auth.claims, e);
+            println!("find user {:?} error: {:?}", auth.claims, e);
             return ApiResult::new().code(500).with_msg(e.to_string());
         }
     };
-
-    // todo: add role(admin, user, guest)
-    if user.status != "normal" {
-        return ApiResult::new().code(403);
-    }
-
-    match state.get_ref().user_query(w).await {
-        Ok(user) => {
-            debug!("find user {:?} ok: {:?}", w, user);
-            ApiResult::new().with_msg("ok").with_data(user)
-        }
-        Err(e) => {
-            error!("find user {:?} error: {:?}", w, e);
-            ApiResult::new().code(500).with_msg(e.to_string())
-        }
-    }
+    // 
+    // // todo: add role(admin, user, guest)
+    // if user.status != "normal" {
+    //     return ApiResult::new().code(403);
+    // }
+    // 
+    // match state.get_ref().user_query(w).await {
+    //     Ok(user) => {
+    //         debug!("find user {:?} ok: {:?}", w, user);
+    //         ApiResult::new().with_msg("ok").with_data(user)
+    //     }
+    //     Err(e) => {
+    //         error!("find user {:?} error: {:?}", w, e);
+    //         ApiResult::new().code(500).with_msg(e.to_string())
+    //     }
+    // }
+    println!("XXXXX msg is {:?}", msg);
+    ApiResult::new().with_msg("okay").with_data(user)
 }
 
 // curl -v -X DELETE localhost:8080/user/who
