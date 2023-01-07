@@ -75,7 +75,7 @@ async fn login(form: web::Json<Login>, state: AppState) -> impl Responder {
 }
 
 // curl -H 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJCb2IiLCJleHAiOjE1OTEyNDYwOTR9.O1dbYu3tqiIi6I8OUlixLuj9dp-1tLl4mjmXZ0ve6uo' localhost:8080/user/info/who |jq .
-// curl 'localhost:8080/user/userInfo?access_token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJCb2IiLCJleHAiOjE1OTEyNTYxNDd9.zJKlZOozYfq-xMXO89kjUyme6SA8_eziacqt5gvXj2U' |jq .
+// curl 'localhost:8080/user/user_info?access_token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJCb2IiLCJleHAiOjE1OTEyNTYxNDd9.zJKlZOozYfq-xMXO89kjUyme6SA8_eziacqt5gvXj2U' |jq .
 #[get("/info/{who}")]
 async fn info(
     form: web::Path<String>,
@@ -96,6 +96,55 @@ async fn info(
                     user.name.as_str(),
                     user.email.as_str(),
                 ]
+                .contains(&w)
+            {
+                return ApiResult::new().with_msg("ok").with_data(user);
+            }
+
+            user
+        }
+        Err(e) => {
+            error!("find user {:?} error: {:?}", auth.claims, e);
+            return ApiResult::new().code(500).with_msg(e.to_string());
+        }
+    };
+
+    // todo: add role(admin, user, guest)
+    if user.status != "normal" {
+        return ApiResult::new().code(403);
+    }
+
+    match state.get_ref().user_query(w).await {
+        Ok(user) => {
+            debug!("find user {:?} ok: {:?}", w, user);
+            ApiResult::new().with_msg("ok").with_data(user)
+        }
+        Err(e) => {
+            error!("find user {:?} error: {:?}", w, e);
+            ApiResult::new().code(500).with_msg(e.to_string())
+        }
+    }
+}
+
+#[get("/user-info/{who}")]
+async fn user_info(
+    form: web::Path<String>,
+    auth: AuthorizationService,
+    state: AppState,
+) -> impl Responder {
+    let who = form.into_inner();
+    let w = who.as_str();
+    // me
+    let user = match state.get_ref().user_query(&auth.claims.sub).await {
+        Ok(user) => {
+            debug!("find user {:?} ok: {:?}", auth.claims, user);
+
+            if who == "_"
+                || [
+                user.id.to_string().as_str(),
+                user.name.as_str(),
+                user.email.as_str(),
+            ]
                 .contains(&w)
             {
                 return ApiResult::new().with_msg("ok").with_data(user);
@@ -167,4 +216,5 @@ pub fn init(cfg: &mut web::ServiceConfig) {
     cfg.service(register);
     cfg.service(delete);
     cfg.service(info);
+    cfg.service(user_info);
 }
