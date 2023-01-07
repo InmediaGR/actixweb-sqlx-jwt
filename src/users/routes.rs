@@ -136,8 +136,8 @@ async fn user_info(
     // let w = who.as_str();
    
 
-    let mut msg = "I am who i am ";
-    msg = "I am who i am Really";
+    // let ui = "John";
+    // msg = "I am who i am Really";
     
     // debug!("XXXXX msg is {:?}", msg);
     
@@ -146,8 +146,8 @@ async fn user_info(
     // me
     let user = match state.get_ref().user_query(&auth.claims.sub).await {
         Ok(user) => {
-            debug!("find user {:?} ok: {:?}", auth.claims, user);
-            println!("find user {:?} ok: {:?}", auth.claims, user);
+            // debug!("find user {:?} ok: {:?}", auth.claims, user);
+            // println!("find user {:?} ok: {:?}", auth.claims, user);
             user
         }
         Err(e) => {
@@ -172,7 +172,7 @@ async fn user_info(
     //         ApiResult::new().code(500).with_msg(e.to_string())
     //     }
     // }
-    println!("XXXXX msg is {:?}", msg);
+    println!("XXXXX msg is {:?}", user);
     ApiResult::new().with_msg("okay").with_data(user)
 }
 
